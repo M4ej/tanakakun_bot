@@ -12,30 +12,35 @@ intents.message_content = True  # メッセージ読み取りが必要な場合�
 # Botの作成
 bot = commands.Bot(command_prefix="", intents=intents)  # prefixは空でもOK
 
-# 我に返ったときのセリフ
+# 賢者タイムのセリフ
 normal_lines = [
     "僕は何をしているんだろう……"
 ]
 
 LOG_FILE = "command_logs.txt"
 
-def log_command(user: discord.user, command: str, channel: discord.TextChannel):
+def log_command(user: discord.User, command: str, channel: discord.TextChannel, special: bool):
     """コマンド入力をターミナルとtxtに記録"""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log_line = f"[{timestamp}] {user} in #{channel} -> {command}"
-    print(log_line)  # ターミナルに出す
+    special_text = " (賢者タイム)" if special else ""
+    log_line = f"[{timestamp}] {user} in #{channel} -> {command}{special_text}"
+    print(log_line)  # ターミナルに出力
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(log_line + "\n")  # txtに保存
 
 # スラッシュコマンド
 @bot.tree.command(name="tanaka", description="田中 くんに喋らせる")
 async def say_tanaka(interaction: discord.Interaction, message: str):
-    log_command(interaction.user, f"/tanaka {message}", interaction.channel)
-
+    # 10分の1で賢者タイム判定
+    special = False
     if random.randint(1, 10) == 1:  # 10分の1の確率
         reply = random.choice(normal_lines)
+        special = True
     else:  # 普通のときは入力内容も残す
         reply = message
+
+    # ログを記録
+    log_command(interaction.user, f"/tanaka {message}", interaction.channel, special)
 
     await interaction.response.send_message(reply)
 
